@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "401946278556",
+    "firebase_url": "https://dclub-32718-default-rtdb.firebaseio.com",
+    "project_id": "dclub-32718",
+    "storage_bucket": "dclub-32718.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:401946278556:android:efb673f718ddd2b88b0b59",
+        "android_client_info": {
+          "package_name": "com.example.daily_club_beta"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0bGypT2DddGl7PZey2V3SmJebf3gund0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:401946278556:android:ccedacc6973662848b0b59",
+        "android_client_info": {
+          "package_name": "com.example.dailyclub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0bGypT2DddGl7PZey2V3SmJebf3gund0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

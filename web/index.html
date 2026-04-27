@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Daily Club - Your ultimate online hypermarket for all your daily needs.">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://dailyclub.in/">
+  <meta property="og:title" content="Daily Club">
+  <meta property="og:description" content="Daily Club - Your ultimate online hypermarket for all your daily needs.">
+  <meta property="og:image" content="/icons/Icon-512.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://dailyclub.in/">
+  <meta property="twitter:title" content="Daily Club">
+  <meta property="twitter:description" content="Daily Club - Your ultimate online hypermarket for all your daily needs.">
+  <meta property="twitter:image" content="/icons/Icon-512.png">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Daily Club">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Daily Club</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!--
+    ── STEP 1: Hint to the browser to fetch the font at the highest network
+       priority while the rest of the <head> is still being parsed.
+       This does NOT block HTML parsing — it only moves the font request to
+       the front of the download queue so it arrives sooner.
+  -->
+  <link
+    rel="preload"
+    href="assets/fonts/NotoSansMalayalam-Regular.ttf"
+    as="font"
+    type="font/ttf"
+    crossorigin="anonymous">
+
+  <!--
+    ── STEP 2: CSS @font-face declaration.
+       font-display:block tells the browser to show invisible text (not a
+       fallback/glyph-box) during the font swap period.  This is the CSS-layer
+       safety net; the JS gate in <body> is the real guard.
+  -->
+  <style>
+    @font-face {
+      font-family: "NotoMalayalam";
+      src: url("assets/fonts/NotoSansMalayalam-Regular.ttf") format("truetype");
+      font-display: block;
+    }
+  </style>
+
+  <!--
+    ── DEBUG: Font Loading API instrumentation ──────────────────────────────
+    Registers passive callbacks on document.fonts so every font lifecycle
+    event is visible in DevTools → Console (F12).
+
+    Timestamp format: "[HH:MM:SS.mmm JS]"  ←→  Flutter's "[T+Xms]" lines.
+    All of this runs synchronously and never delays Flutter startup.
+  -->
+  <script>
+    // Shared wall-clock timestamp — used by both head and body scripts.
+    function jsTs() {
+      var n = new Date();
+      return '[' + n.toTimeString().slice(0, 8) + '.' +
+             String(n.getMilliseconds()).padStart(3, '0') + ' JS]';
+    }
+
+    // Fires for every FontFace that the browser begins loading.
+    document.fonts.onloading = function (e) {
+      var families = Array.from(e.fontfaces).map(function (f) { return f.family; }).join(', ');
+      console.log('%c🔵 ' + jsTs() + ' FONT LOADING STARTED: "' + families + '"',
+                  'color:#2196F3;font-weight:bold;');
+    };
+
+    // Fires when a batch of FontFaces finishes loading successfully.
+    document.fonts.onloadingdone = function (e) {
+      var families = Array.from(e.fontfaces).map(function (f) { return f.family; }).join(', ');
+      console.log('%c🟢 ' + jsTs() + ' FONT LOADING DONE: "' + families + '"',
+                  'color:#4CAF50;font-weight:bold;');
+    };
+
+    // Fires if any FontFace fails to load.
+    document.fonts.onloadingerror = function (e) {
+      var families = Array.from(e.fontfaces).map(function (f) { return f.family; }).join(', ');
+      console.error('🔴 ' + jsTs() + ' FONT LOADING ERROR: "' + families + '"');
+    };
+
+    // document.fonts.ready resolves once all fonts in the FontFaceSet are
+    // settled (loaded or failed).  Used here only for passive confirmation
+    // logging — Flutter bootstrap is gated separately in <body>.
+    document.fonts.ready.then(function () {
+      console.log('%c✅ ' + jsTs() + ' document.fonts.ready — all fonts settled.',
+                  'color:#4CAF50;font-weight:bold;');
+
+      var available = document.fonts.check('12px NotoMalayalam');
+      if (available) {
+        console.log('%c✅ ' + jsTs() + ' NotoMalayalam is AVAILABLE in FontFaceSet.',
+                    'color:#4CAF50;font-weight:bold;');
+      } else {
+        console.warn('⚠️  ' + jsTs() + ' NotoMalayalam NOT AVAILABLE after fonts.ready — ' +
+                     'Malayalam may still render with fallback glyphs.');
+      }
+    });
+
+    console.log('%c🔵 ' + jsTs() + ' Font debug instrumentation registered.',
+                'color:#2196F3;');
+  </script>
+
+  <!--
+    ── Renderer selection ───────────────────────────────────────────────────
+    window.flutterConfiguration was removed because Flutter 3.10+ generates
+    flutter_bootstrap.js with its own engineInitializer.initializeEngine()
+    call.  Having BOTH APIs active simultaneously throws:
+
+      "Using the (deprecated) window.flutterConfiguration and
+       initializeEngine configuration simultaneously is not supported."
+
+    Renderer is now selected at build / run time via the CLI flag:
+
+      Development : flutter run  --web-renderer canvaskit
+      Production  : flutter build web --release --web-renderer canvaskit
+
+    The generated flutter_bootstrap.js embeds the renderer choice from the
+    build flag, so no runtime JS configuration is needed here.
+  -->
+  
+  <script>window.flutterfire_web_sdk_version = '12.12.0';</script>
+</head>
+<body>
+
+  <!--
+    ── STEP 3: Font-gated Flutter bootstrap ─────────────────────────────────
+
+    PROBLEM (confirmed by debug logs):
+      The previous code used  <script src="flutter_bootstrap.js" async>.
+      The `async` attribute starts Flutter the moment the JS file finishes
+      downloading, completely racing against font loading.  Malayalam widgets
+      built and painted their first frame before NotoMalayalam was ready →
+      broken glyph boxes on first render.
+
+    FIX:
+      We never inject flutter_bootstrap.js into the DOM until the font
+      Promise resolves.  Because script injection is itself async (the browser
+      downloads and executes the script after we append the <script> element),
+      the sequence is now strictly:
+
+        Font downloaded & decoded
+          → document.fonts.add(face) registers it in FontFaceSet
+            → flutter_bootstrap.js injected & executed
+              → Flutter engine initialises
+                → Dart main() runs
+                  → Widget tree builds
+                    → FIRST FRAME painted  (font already available)
+
+    TIMEOUT GUARD:
+      If the font fails to load (network error, 404, slow connection) we fall
+      through after FONT_LOAD_TIMEOUT_MS and start Flutter anyway rather than
+      blocking the app forever.  Malayalam text may show fallback glyphs in
+      that rare case, which is far preferable to a blank screen.
+  -->
+  <script>
+    (function () {
+      var FONT_LOAD_TIMEOUT_MS = 5000; // max wait before starting Flutter anyway
+
+      // ── Inject flutter_bootstrap.js (replaces the old `async` script tag) ──
+      function startFlutter() {
+        console.log('%c🚀 ' + jsTs() + ' Injecting flutter_bootstrap.js — Flutter engine starting.',
+                    'color:#FF9800;font-weight:bold;');
+        var script = document.createElement('script');
+        script.src = 'flutter_bootstrap.js';
+        document.body.appendChild(script);
+      }
+
+      // ── Font-gate ──────────────────────────────────────────────────────────
+      // We use the FontFace constructor rather than document.fonts.load() so
+      // that the load is guaranteed to be initiated here, not dependent on
+      // whether the browser has already triggered the @font-face rule.
+      async function loadApp() {
+        console.log('%c🔵 ' + jsTs() + ' loadApp(): awaiting NotoMalayalam before Flutter starts.',
+                    'color:#2196F3;font-weight:bold;');
+
+        try {
+          var malFont = new FontFace(
+            'NotoMalayalam',
+            'url(assets/fonts/NotoSansMalayalam-Regular.ttf)',
+            { weight: '400', style: 'normal' }
+          );
+
+          // Race the font load against the timeout so a network problem can
+          // never leave the user staring at a blank white screen.
+          var timeoutPromise = new Promise(function (_, reject) {
+            setTimeout(function () {
+              reject(new Error('NotoMalayalam load timed out after ' + FONT_LOAD_TIMEOUT_MS + ' ms'));
+            }, FONT_LOAD_TIMEOUT_MS);
+          });
+
+          var loadedFace = await Promise.race([malFont.load(), timeoutPromise]);
+
+          // Register the decoded font in the page's FontFaceSet so it is
+          // immediately available to both the browser and CanvasKit.
+          document.fonts.add(loadedFace);
+
+          console.log('%c🟢 ' + jsTs() + ' Malayalam font loaded and added to FontFaceSet — BEFORE Flutter starts.',
+                      'color:#4CAF50;font-weight:bold;');
+
+        } catch (err) {
+          // Font failed (network error, 404, timeout) — log and continue.
+          // Flutter will still start; Malayalam may show fallback glyphs.
+          console.warn('⚠️  ' + jsTs() + ' Font load failed — starting Flutter without Malayalam font.', err);
+        }
+
+        // Either the font is ready or we timed out — either way, start Flutter.
+        startFlutter();
+      }
+
+      loadApp();
+    })();
+  </script>
+
+</body>
+</html>

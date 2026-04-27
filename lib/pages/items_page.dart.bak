@@ -1,0 +1,1191 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
+import 'package:provider/provider.dart';
+
+import '../cart_scope.dart';
+import '../cart_controller.dart';
+import '../debug/rebuild_tracker.dart';
+import '../debug/perf_logger.dart';
+import '../models/category_model.dart';
+import '../models/firebase_product_model.dart';
+import '../models/product.dart' as app_models;
+import '../providers/category_provider.dart';
+import '../location_service.dart';
+import '../providers/delivery_location_provider.dart';
+import '../providers/user_profile_provider.dart';
+import '../providers/favorites_provider.dart';
+import '../providers/order_provider.dart';
+import '../providers/product_provider.dart';
+import '../theme/app_colors.dart';
+import '../widgets/optimized_network_image.dart';
+import '../widgets/profile_drawer.dart';
+import '../widgets/track_order_fab.dart';
+import 'cart_page.dart';
+import 'product_details_page.dart';
+import '../models/stock_variant_model.dart';
+import '../providers/stock_provider.dart';
+import '../widgets/items/item_card_product.dart';
+import '../widgets/items/item_card.dart';
+import '../widgets/cart_edit_bottom_sheet.dart';
+
+// Categories are fetched live from Firebase (root/category/{code}/name).
+// Products are fetched live from Firebase (root/products/{code}/).
+// Static sample data has been removed.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Root page
+// ─────────────────────────────────────────────────────────────────────────────
+
+class ItemsPage extends StatefulWidget {
+  const ItemsPage({super.key, this.initialCategory});
+
+  /// Optional initial category label.
+  final String? initialCategory;
+
+  @override
+  State<ItemsPage> createState() => _ItemsPageState();
+}
+
+class _ItemsPageState extends State<ItemsPage>
+    with RebuildTracker<ItemsPage>, TickerProviderStateMixin {
+  /// Live stream of categories from Firebase (same source as CategoryGrid).
+  Future<List<CategoryModel>>? _categoriesFuture;
+
+  /// Populated once the first Firebase snapshot arrives.
+  List<CategoryModel> _categoryModels = const [];
+  List<String> _categories = const [];
+
+  /// The display name of the selected chip (e.g. "Masala").
+  String _selectedCategory = '';
+
+  /// The Firebase code of the selected chip (e.g. "MSLSPICE").
+  /// Used to filter root/products by categoryCode.
+  String _selectedCategoryCode = '';
+
+  String _searchQuery = '';
+  final ScrollController _scrollController = ScrollController();
+  int _currentLimit = 15;
+
+  /// Active product stream — swapped when the selected category changes.
+  Stream<List<FirebaseProductModel>>? _productsStream;
+
+  /// In-memory cache of products per category code to avoid showing shimmer
+  /// when switching back to a previously loaded tab.
+  final Map<String, List<FirebaseProductModel>> _categoryProductsCache = {};
+
+  // Single page-level controller for entrance animations.
+  late final AnimationController _entranceController;
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _categoriesFuture = CategoryProvider.getCategoriesOnce();
+        });
+      }
+    });
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    )..forward();
+
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      // User reached near bottom, load more
+      setState(() {
+        _currentLimit += 15;
+      });
+    }
+  }
+
+  /// Called when a new category list arrives from Firebase.
+  void _onCategoriesLoaded(List<CategoryModel> models) {
+    final names = models.map((m) => m.name).toList();
+    if (names.isEmpty) return;
+    // Only update if the list actually changed to avoid unnecessary rebuilds.
+    if (names.join(',') == _categories.join(',')) return;
+    setState(() {
+      _categoryModels = models;
+      _categories = names;
+      // Preserve user selection if the category still exists; else pick first.
+      CategoryModel? selected;
+      if (_selectedCategory.isNotEmpty &&
+          _categories.contains(_selectedCategory)) {
+        selected = models.firstWhere((m) => m.name == _selectedCategory);
+      } else if (widget.initialCategory != null &&
+          _categories.contains(widget.initialCategory)) {
+        selected = models.firstWhere((m) => m.name == widget.initialCategory);
+      } else {
+        selected = models.first;
+      }
+      _selectedCategory = selected.name;
+      _selectedCategoryCode = selected.code;
+      Perf.start('ItemsPage_Data', 'fetch');
+      _productsStream = ProductProvider.productsStream(_selectedCategoryCode);
+      
+      final index = _categories.indexOf(_selectedCategory);
+      if (index >= 0 && _pageController.hasClients) {
+        _pageController.jumpToPage(index);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _entranceController.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onCategoryIndexChanged(int index) {
+    if (index < 0 || index >= _categories.length) return;
+    final value = _categories[index];
+    if (_selectedCategory == value) return;
+    
+    _entranceController.forward(from: 0);
+    setState(() {
+      _selectedCategory = value;
+      final model = _categoryModels[index];
+      _selectedCategoryCode = model.code;
+      Perf.start('ItemsPage_Data', 'fetch');
+      _productsStream = ProductProvider.productsStream(_selectedCategoryCode);
+      _searchQuery = ''; // Reset search when category changes
+    });
+  }
+
+  void _onCategoryChanged(String value) {
+    final index = _categories.indexOf(value);
+    if (index >= 0) {
+      _onCategoryIndexChanged(index);
+      if (_pageController.hasClients) {
+        _pageController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    }
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {
+      _searchQuery = value;
+      _currentLimit = 15; // Reset limit on new search
+    });
+  }
+
+  void _handleAddToCart(app_models.Product product) {
+    CartScope.read(context).addWithUi(product, 1);
+  }
+
+  @override
+  Widget buildTracked(BuildContext context) {
+    // FIX 21: Read cart controller WITHOUT subscribing the entire ItemsPage to it!
+    // CartScope.of(context) was rebuilding the ENTIRE CustomScrollView and Header
+    // on every 'Add to Cart' click!
+    final CartController cart = CartScope.read(context);
+    // FIX 1: Removed GoogleFonts.plusJakartaSansTextTheme + Theme.copyWith
+    // (was causing ~400ms first build; font resolved per-Text widget instead).
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppThemeScope.themeOf(context).gradientTop,
+            const Color(0xFFF3F4F6),
+          ],
+          stops: const [0.0, 1.0],
+        ),
+      ),
+      child: Scaffold(
+        drawer: const ProfileDrawer(),
+        backgroundColor: Colors.transparent,
+        extendBody: true,
+        body: Stack(
+          children: [
+            // Header, chips, and scroll view live OUTSIDE any ListenableBuilder.
+            // They only rebuild when setState fires (category / search change).
+            // The grid is the only part that needs cartMap, so it gets its own
+            // tightly-scoped ListenableBuilder — no more 382 ms build spikes.
+            CustomScrollView(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                _ItemsHeaderSliver(onSearchChanged: _onSearchChanged),
+                const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                SliverToBoxAdapter(
+                  child: FutureBuilder<List<CategoryModel>>(
+                    future: _categoriesFuture,
+                    builder: (context, snapshot) {
+                      if (_categoriesFuture != null && snapshot.hasData) {
+                        // Sync loaded names into state without triggering
+                        // a mid-build setState — schedule for next frame.
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) _onCategoriesLoaded(snapshot.data!);
+                        });
+                      }
+                      if (_categories.isEmpty) {
+                        // Show a slim shimmer row while waiting for Firebase.
+                        return const _ChipsShimmer();
+                      }
+                      return SizedBox(
+                        height: 42,
+                        child: CategoryChipsWidget(
+                          categories: _categories,
+                          selected: _selectedCategory,
+                          onChanged: _onCategoryChanged,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 6)),
+                // Products are streamed live from Firebase filtered by categoryCode.
+                // StreamBuilder is inside the sliver so only the grid rebuilds on
+                // new snapshots — the header and chips stay untouched.
+                StreamBuilder<List<FirebaseProductModel>>(
+                  stream: _productsStream,
+                  builder: (context, snapshot) {
+                    // ── Loading state ─────────────────────────────────────
+                    if (_productsStream == null ||
+                        snapshot.connectionState == ConnectionState.waiting) {
+                      // Check if we have cached products for this category to show instantly
+                      if (_categoryProductsCache.containsKey(
+                        _selectedCategoryCode,
+                      )) {
+                        // We have cached products, skip the shimmer and just show them
+                        // while the stream connects in the background.
+                      } else {
+                        return const SliverToBoxAdapter(
+                          child: _ProductsShimmer(),
+                        );
+                      }
+                    }
+
+                    // ── Error state ───────────────────────────────────────
+                    if (snapshot.hasError) {
+                      return SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Center(
+                            child: Text(
+                              'Failed to load products.\n${snapshot.error}',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: "PlusJakartaSans",
+                                color: Colors.redAccent,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+
+                    // ── Apply search filter in-memory ─────────────────────
+                    final raw = snapshot.data ?? _categoryProductsCache[_selectedCategoryCode] ?? [];
+                    
+                    // Update cache with fresh data if available
+                    if (snapshot.hasData) {
+                      _categoryProductsCache[_selectedCategoryCode] = snapshot.data!;
+                    }
+                    
+                    final fetchMs = Perf.stopAndGetMs(
+                      'ItemsPage_Data',
+                      'fetch',
+                    );
+                    if (fetchMs != null) {
+                      debugPrint(
+                        '[ItemsPage_Data] Products fetched (${raw.length}) in $fetchMs ms',
+                      );
+                    }
+                    final query = _searchQuery.trim().toLowerCase();
+                    final filtered = query.isEmpty
+                        ? raw
+                        : raw
+                              .where(
+                                (p) => p.name.toLowerCase().contains(query),
+                              )
+                              .toList();
+
+                    if (filtered.isEmpty) {
+                      return SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 48,
+                          ),
+                          child: Center(
+                            child: Text(
+                              query.isNotEmpty
+                                  ? 'No products match "$query"'
+                                  : 'No products in this category yet.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: "PlusJakartaSans",
+                                color: const Color(0xFF9CA3AF),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+
+                    // Apply client-side limits for pagination performance
+                    final paginatedList = filtered.take(_currentLimit).toList();
+
+                    // Preload first 5-8 visible images
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!mounted) return;
+                      for (int i = 0; i < paginatedList.length && i < 8; i++) {
+                        final url = paginatedList[i].picUrl;
+                        if (url != null && url.isNotEmpty) {
+                          precacheImage(
+                            CachedNetworkImageProvider(url),
+                            context,
+                            onError: (e, stackTrace) {
+                              debugPrint('Prefetch softly failed for $url: $e');
+                            },
+                          );
+                        }
+                      }
+                    });
+
+                    return SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 84),
+                      sliver: SliverGrid(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 8,
+                              crossAxisSpacing: 8,
+                              childAspectRatio: 0.82,
+                            ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final fbProduct = paginatedList[index];
+                            final product = ItemCardProduct.fromFirebase(
+                              fbProduct,
+                            );
+
+                            // Lighter entrance calculation -> less rendering jank
+                            final start = (index * 0.05).clamp(0.0, 0.5);
+                            final end = (start + 0.25).clamp(0.0, 1.0);
+                            final curvedAnim = CurvedAnimation(
+                              parent: _entranceController,
+                              curve: Interval(
+                                start,
+                                end,
+                                curve: Curves.easeOut,
+                              ),
+                            );
+
+                            return FadeTransition(
+                              opacity: curvedAnim,
+                              child: ListenableBuilder(
+                                listenable: cart,
+                                builder: (context, _) {
+                                  final isInCart = cart.entries.any(
+                                    (e) => e.product.name == product.name,
+                                  );
+                                  return ItemCard(
+                                    key: ValueKey(fbProduct.code),
+                                    product: product,
+                                    isInCart: isInCart,
+                                    onAdd: _handleAddToCart,
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                          childCount: paginatedList.length,
+                          findChildIndexCallback: (Key key) {
+                            final id = (key as ValueKey<String>).value;
+                            final idx = paginatedList.indexWhere(
+                              (p) => p.code == id,
+                            );
+                            return idx >= 0 ? idx : null;
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+            // FIX: Scoped cart bar — uses its own ListenableBuilder so only
+            // the bar rebuilds on cart changes, not the whole page.
+            ListenableBuilder(
+              listenable: cart,
+              builder: (context, _) {
+                if (cart.count == 0) {
+                  return const SizedBox.shrink();
+                }
+                return Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    // FIX 7: RepaintBoundary isolates cart bar layer from scroll.
+                    child: RepaintBoundary(
+                      child: FloatingCartBarWidget(
+                        itemCount: cart.count,
+                        total: cart.totalPrice,
+                        onViewCart: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const CartPage(),
+                            ),
+                          );
+                        },
+                        onClearCart: () =>
+                            CartEditBottomSheet.show(context, cart),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            Consumer<OrderProvider>(
+              builder: (context, orderProvider, _) {
+                final activeOrders = orderProvider.activeOrders;
+                if (activeOrders.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                final latestOrder = activeOrders.first;
+                // FIX: Use shared widget instead of duplicated local class
+                return DraggableTrackOrderFab(orderId: latestOrder.orderId);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Header (match home page header style)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class HeaderWidget extends StatelessWidget {
+  const HeaderWidget({super.key});
+
+  static final _titleStyle = TextStyle(
+    fontFamily: "PlusJakartaSans",
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: FontWeight.w800,
+    letterSpacing: 1,
+  );
+
+  // Method to get subtitle style dynamically using context theme
+  static TextStyle _subtitleStyle(BuildContext context) => TextStyle(
+    fontFamily: "PlusJakartaSans",
+    color: AppThemeScope.themeOf(context).primaryAccent.withValues(alpha: 0.9),
+    fontSize: 11,
+    fontWeight: FontWeight.bold,
+  );
+
+  Future<void> _handleLocationTap(BuildContext context) async {
+    final result = await LocationService.getCurrentLocation(context);
+    if (!context.mounted || result == null) return;
+
+    // Update the visual header
+    context.read<DeliveryLocationProvider>().update(result.formattedAddress);
+
+    // Save to user profile so checkout details and drawer can use it
+    await context.read<UserProfileProvider>().updateAddress(
+      result.formattedAddress,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<DeliveryLocationProvider>(
+      builder: (context, locationProvider, _) {
+        return Row(
+          children: [
+            IconButton(
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+              ),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            const SizedBox(width: 2),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => _handleLocationTap(context),
+                behavior: HitTestBehavior.opaque,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            locationProvider.city,
+                            style: _titleStyle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      locationProvider.address,
+                      style: _subtitleStyle(context),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            CartIconWithBadge(
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute<void>(builder: (_) => const CartPage())),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sliver header with collapsing top row and sticky search bar
+// ─────────────────────────────────────────────────────────────────────────────
+class _ItemsHeaderSliver extends StatelessWidget {
+  const _ItemsHeaderSliver({required this.onSearchChanged});
+
+  final ValueChanged<String> onSearchChanged;
+
+  static const double _expandedHeight = 120;
+
+  @override
+  Widget build(BuildContext context) {
+    final double topPadding = MediaQuery.of(context).padding.top;
+    final headerColor = AppThemeScope.themeOf(context).gradientTop;
+
+    return SliverAppBar(
+      pinned: true,
+      expandedHeight: _expandedHeight + topPadding,
+      automaticallyImplyLeading: false,
+      backgroundColor: headerColor,
+      elevation: 0,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+      ),
+      flexibleSpace: LayoutBuilder(
+        builder: (context, constraints) {
+          final double maxHeight = _expandedHeight + topPadding;
+
+          final double t =
+              ((constraints.biggest.height - kToolbarHeight) /
+                      (maxHeight - kToolbarHeight))
+                  .clamp(0.0, 1.0);
+
+          return Container(
+            decoration: BoxDecoration(
+              color: headerColor,
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(32),
+              ),
+            ),
+            child: Padding(
+              padding: EdgeInsets.only(
+                top: topPadding + 8 * t,
+                left: 20,
+                right: 20,
+                bottom: 8,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  // FIX 11 (Layout Extension): We must retain the vertical compression
+                  // of the header using Align(heightFactor) and ClipRect to prevent
+                  // RenderFlex overflow during collapse, but we DO NOT wrap it in
+                  // an Opacity layer, saving an offscreen compositing pass.
+                  ClipRect(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      heightFactor: t > 0 ? t : 0,
+                      child: const HeaderWidget(),
+                    ),
+                  ),
+                  SizedBox(height: 6 * t),
+                  // FIX: Pass onSearchChanged through to actually update search state
+                  SearchBarWidget(onChanged: onSearchChanged),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// FIX: Scoped ListenableBuilder tightly to badge only.
+// The outer icon container (color, shadow, shape) no longer rebuilds on cart
+// changes — only the badge count text does.
+class CartIconWithBadge extends StatelessWidget {
+  const CartIconWithBadge({super.key, this.onTap});
+
+  final VoidCallback? onTap;
+
+  static final _badgeStyle = TextStyle(
+    fontFamily: "PlusJakartaSans",
+    fontSize: 10,
+    fontWeight: FontWeight.w700,
+    color: Colors.white,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final CartController cart = CartScope.of(context);
+    final accent = AppThemeScope.themeOf(context).primaryAccent;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: accent,
+              borderRadius: BorderRadius.circular(18),
+              // FIX 12: BoxShadow removed
+            ),
+            child: const Icon(
+              Icons.shopping_cart_outlined,
+              size: 22,
+              color: Colors.white,
+            ),
+          ),
+          Positioned(
+            right: -2,
+            top: -2,
+            child: ListenableBuilder(
+              listenable: cart,
+              builder: (context, _) {
+                final int count = cart.count;
+                if (count == 0) return const SizedBox.shrink();
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: Text('$count', style: _badgeStyle),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Search bar with animated placeholder
+// ─────────────────────────────────────────────────────────────────────────────
+
+class SearchBarWidget extends StatefulWidget {
+  const SearchBarWidget({super.key, required this.onChanged});
+
+  final ValueChanged<String> onChanged;
+
+  @override
+  State<SearchBarWidget> createState() => _SearchBarWidgetState();
+}
+
+class _SearchBarWidgetState extends State<SearchBarWidget> {
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+
+  static final _placeholderStyle = TextStyle(
+    fontFamily: "PlusJakartaSans",
+    fontSize: 13,
+    fontWeight: FontWeight.w500,
+    color: Colors.grey.shade500,
+  );
+
+  static final _inputStyle = TextStyle(
+    fontFamily: "PlusJakartaSans",
+    fontSize: 13,
+    fontWeight: FontWeight.w600,
+    color: const Color(0xFF111827),
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        // FIX 12: BoxShadow removed.
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Icon(Icons.search_rounded, color: Colors.grey.shade500, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Stack(
+              alignment: Alignment.centerLeft,
+              children: [
+                // FIX 14: KILLED the 3-second animated switcher Timer that continuously Dirtied tree.
+                if (_controller.text.isEmpty)
+                  Text(
+                    "Search for 'Milk'..",
+                    style: _placeholderStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                TextField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  onChanged: (v) {
+                    setState(() {}); // Updates label visibility locally
+                    widget.onChanged(v);
+                  },
+                  style: _inputStyle,
+                  decoration: const InputDecoration(
+                    isCollapsed: true,
+                    border: InputBorder.none,
+                  ),
+                  cursorColor: AppThemeScope.themeOf(context).primaryAccent,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          CircleAvatar(
+            radius: 17,
+            backgroundColor: AppThemeScope.themeOf(
+              context,
+            ).primaryAccent.withValues(alpha: 0.15),
+            child: Icon(
+              Icons.mic_rounded,
+              size: 18,
+              color: AppThemeScope.themeOf(context).primaryAccent,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Category chips
+// ─────────────────────────────────────────────────────────────────────────────
+
+class CategoryChipsWidget extends StatefulWidget {
+  const CategoryChipsWidget({
+    super.key,
+    required this.categories,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final List<String> categories;
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  @override
+  State<CategoryChipsWidget> createState() => _CategoryChipsWidgetState();
+}
+
+class _CategoryChipsWidgetState extends State<CategoryChipsWidget> {
+  final ScrollController _scrollController = ScrollController();
+
+  static final _selectedStyle = TextStyle(
+    fontFamily: "PlusJakartaSans",
+    fontSize: 12,
+    fontWeight: FontWeight.w800,
+    color: Colors.white,
+  );
+  static final _unselectedStyle = TextStyle(
+    fontFamily: "PlusJakartaSans",
+    fontSize: 12,
+    fontWeight: FontWeight.w800,
+    color: const Color.fromARGB(251, 0, 0, 0),
+  );
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant CategoryChipsWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selected != widget.selected) {
+      _scrollToSelected();
+    }
+  }
+
+  void _scrollToSelected() {
+    final index = widget.categories.indexOf(widget.selected);
+    if (index == -1 || !_scrollController.hasClients) return;
+    
+    // Estimate chip width based on text length + padding
+    double offset = 0.0;
+    for (int i = 0; i < index; i++) {
+       // rough estimate: 12px padding + (text.length * 7px char width) + 12px spacer
+       offset += 32.0 + (widget.categories[i].length * 8.0) + 12.0;
+    }
+    
+    final screenWidth = MediaQuery.of(context).size.width;
+    final targetOffset = offset - (screenWidth / 2) + 50.0;
+    
+    _scrollController.animateTo(
+      targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = AppThemeScope.themeOf(context).primaryAccent;
+    return ListView.separated(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      scrollDirection: Axis.horizontal,
+      itemBuilder: (context, index) {
+        final label = widget.categories[index];
+        final isSelected = label == widget.selected;
+        return GestureDetector(
+          onTap: () => widget.onChanged(label),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+            decoration: BoxDecoration(
+              color: isSelected ? accent : Colors.white,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: isSelected ? accent : const Color(0xFFE5E7EB),
+                width: isSelected ? 1 : 0.5,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                label,
+                style: isSelected ? _selectedStyle : _unselectedStyle,
+              ),
+            ),
+          ),
+        );
+      },
+      separatorBuilder: (context, index) => const SizedBox(width: 12),
+      itemCount: widget.categories.length,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Chips shimmer — shown while Firebase categories are loading
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ChipsShimmer extends StatefulWidget {
+  const _ChipsShimmer();
+
+  @override
+  State<_ChipsShimmer> createState() => _ChipsShimmerState();
+}
+
+class _ChipsShimmerState extends State<_ChipsShimmer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(
+      begin: 0.35,
+      end: 0.75,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (context, _) {
+        return SizedBox(
+          height: 42,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            scrollDirection: Axis.horizontal,
+            itemCount: 4,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (_, index) => Container(
+              width: 80 + (index % 2) * 20.0,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Color.fromRGBO(203, 213, 225, _anim.value),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Products shimmer — shown while Firebase products are loading
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ProductsShimmer extends StatefulWidget {
+  const _ProductsShimmer();
+
+  @override
+  State<_ProductsShimmer> createState() => _ProductsShimmerState();
+}
+
+class _ProductsShimmerState extends State<_ProductsShimmer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(
+      begin: 0.25,
+      end: 0.65,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (context, _) {
+        final shimmerColor = Color.fromRGBO(203, 213, 225, _anim.value);
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 0.82,
+            ),
+            itemCount: 4,
+            itemBuilder: (_, __) => Container(
+              decoration: BoxDecoration(
+                color: shimmerColor,
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Floating cart summary bar
+// ─────────────────────────────────────────────────────────────────────────────
+
+class FloatingCartBarWidget extends StatelessWidget {
+  const FloatingCartBarWidget({
+    super.key,
+    required this.itemCount,
+    required this.total,
+    required this.onViewCart,
+    required this.onClearCart,
+  });
+
+  final int itemCount;
+  final double total;
+  final VoidCallback onViewCart;
+  final VoidCallback onClearCart;
+
+  static final _itemsStyle = TextStyle(
+    fontFamily: "PlusJakartaSans",
+    fontSize: 10,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+    letterSpacing: 0.7,
+  );
+  static final _totalLabelStyle = TextStyle(
+    fontFamily: "PlusJakartaSans",
+    fontSize: 10,
+    fontWeight: FontWeight.w600,
+    color: Colors.white70,
+    letterSpacing: 0.6,
+  );
+  static final _totalStyle = TextStyle(
+    fontFamily: "PlusJakartaSans",
+    fontSize: 16,
+    fontWeight: FontWeight.w800,
+    color: Colors.white,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = AppThemeScope.themeOf(context).primaryAccent;
+    return SafeArea(
+      minimum: EdgeInsets.zero,
+      child: Container(
+        height: 72,
+        decoration: BoxDecoration(
+          color: accent,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: accent.withValues(alpha: 0.65),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: onClearCart,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.delete_outline,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(height: 2),
+                    Text('$itemCount ITEMS', style: _itemsStyle),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('TOTAL', style: _totalLabelStyle),
+                  const SizedBox(height: 2),
+                  Text('₹${total.toStringAsFixed(2)}', style: _totalStyle),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: onViewCart,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'VIEW CART',
+                      style: TextStyle(
+                        fontFamily: "PlusJakartaSans",
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: accent,
+                        letterSpacing: 0.7,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(Icons.chevron_right_rounded, size: 18, color: accent),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

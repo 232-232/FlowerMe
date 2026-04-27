@@ -1,0 +1,83 @@
+WARNING|STATIC_WARNING|UNUSED_ELEMENT|C:\\aalbot\\dailyclub-main\\lib\\pages\\cart_page.dart|666|7|20|The declaration '_ShimmerProgressFill' isn't referenced.
+WARNING|STATIC_WARNING|UNUSED_ELEMENT|C:\\aalbot\\dailyclub-main\\lib\\pages\\product_details_page.dart|1028|7|14|The declaration '_LowStockBadge' isn't referenced.
+INFO|LINT|PREFER_INTERPOLATION_TO_COMPOSE_STRINGS|C:\\aalbot\\dailyclub-main\\check_errors.dart|5|45|31|Use interpolation to compose strings and values.
+INFO|LINT|UNNECESSARY_CONST|C:\\aalbot\\dailyclub-main\\lib\\data\\items_catalog.dart|95|19|5|Unnecessary 'const' keyword.
+INFO|LINT|UNNECESSARY_BRACE_IN_STRING_INTERPS|C:\\aalbot\\dailyclub-main\\lib\\debug\\rebuild_tracker.dart|25|25|14|Unnecessary braces in a string interpolation.
+INFO|LINT|USE_BUILD_CONTEXT_SYNCHRONOUSLY|C:\\aalbot\\dailyclub-main\\lib\\location_service.dart|86|7|7|Don't use 'BuildContext's across async gaps.
+INFO|LINT|USE_BUILD_CONTEXT_SYNCHRONOUSLY|C:\\aalbot\\dailyclub-main\\lib\\location_service.dart|122|39|7|Don't use 'BuildContext's across async gaps.
+INFO|LINT|USE_BUILD_CONTEXT_SYNCHRONOUSLY|C:\\aalbot\\dailyclub-main\\lib\\location_service.dart|130|37|7|Don't use 'BuildContext's across async gaps.
+INFO|LINT|USE_BUILD_CONTEXT_SYNCHRONOUSLY|C:\\aalbot\\dailyclub-main\\lib\\location_service.dart|141|48|7|Don't use 'BuildContext's across async gaps.
+INFO|LINT|USE_BUILD_CONTEXT_SYNCHRONOUSLY|C:\\aalbot\\dailyclub-main\\lib\\location_service.dart|152|48|7|Don't use 'BuildContext's across async gaps.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\pages\\checkout_details_page.dart|60|34|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|LINT|UNNECESSARY_BRACE_IN_STRING_INTERPS|C:\\aalbot\\dailyclub-main\\lib\\pages\\items_page.dart|617|47|24|Unnecessary braces in a string interpolation.
+INFO|LINT|UNNECESSARY_UNDERSCORES|C:\\aalbot\\dailyclub-main\\lib\\pages\\order_tracking_page.dart|1587|20|2|Unnecessary use of multiple underscores.
+INFO|LINT|UNNECESSARY_UNDERSCORES|C:\\aalbot\\dailyclub-main\\lib\\pages\\order_tracking_page.dart|3006|31|2|Unnecessary use of multiple underscores.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\pages\\product_details_page.dart|621|41|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\pages\\product_details_page.dart|707|30|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\pages\\product_details_page.dart|709|33|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\pages\\product_details_page.dart|710|32|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\pages\\product_details_page.dart|714|32|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\pages\\product_details_page.dart|716|35|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\pages\\product_details_page.dart|717|34|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\pages\\product_details_page.dart|777|42|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\pages\\product_details_page.dart|878|49|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\pages\\product_details_page.dart|927|49|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\pages\\product_details_page.dart|928|49|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\pages\\product_details_page.dart|1095|33|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\pages\\product_details_page.dart|1172|43|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|LINT|UNNECESSARY_UNDERSCORES|C:\\aalbot\\dailyclub-main\\lib\\providers\\category_provider.dart|29|22|2|Unnecessary use of multiple underscores.
+INFO|LINT|UNNECESSARY_UNDERSCORES|C:\\aalbot\\dailyclub-main\\lib\\providers\\home_feed_provider.dart|186|22|2|Unnecessary use of multiple underscores.
+INFO|HINT|UNNECESSARY_IMPORT|C:\\aalbot\\dailyclub-main\\lib\\providers\\items_cache_provider.dart|1|8|33|The import of 'package:flutter/foundation.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/widgets.dart'.
+INFO|LINT|UNNECESSARY_UNDERSCORES|C:\\aalbot\\dailyclub-main\\lib\\providers\\items_cache_provider.dart|25|22|2|Unnecessary use of multiple underscores.
+INFO|LINT|DANGLING_LIBRARY_DOC_COMMENTS|C:\\aalbot\\dailyclub-main\\lib\\services\\image_picker_service.dart|1|1|61|Dangling library doc comment.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\services\\image_picker_service_web.dart|3|1|27|'dart:html' is deprecated and shouldn't be used. Use package:web and dart:js_interop instead.
+INFO|LINT|DANGLING_LIBRARY_DOC_COMMENTS|C:\\aalbot\\dailyclub-main\\lib\\services\\local_storage_service.dart|1|1|56|Dangling library doc comment.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\services\\local_storage_service_web.dart|2|1|27|'dart:html' is deprecated and shouldn't be used. Use package:web and dart:js_interop instead.
+INFO|LINT|PREFER_CONDITIONAL_ASSIGNMENT|C:\\aalbot\\dailyclub-main\\lib\\services\\search_service.dart|64|5|790|The 'if' statement could be replaced by a null-aware assignment.
+INFO|LINT|USE_SUPER_PARAMETERS|C:\\aalbot\\dailyclub-main\\lib\\theme\\app_colors.dart|170|9|13|Parameter 'child' could be a super parameter.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\category_grid.dart|117|30|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\category_grid.dart|118|33|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|LINT|UNNECESSARY_UNDERSCORES|C:\\aalbot\\dailyclub-main\\lib\\widgets\\category_grid.dart|253|32|2|Unnecessary use of multiple underscores.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\coming_soon_card.dart|68|35|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\coming_soon_card.dart|70|54|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|LINT|UNNECESSARY_UNDERSCORES|C:\\aalbot\\dailyclub-main\\lib\\widgets\\deal_banner.dart|172|31|2|Unnecessary use of multiple underscores.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\deal_banner.dart|237|39|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\deal_banner.dart|238|42|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\deal_banner.dart|298|45|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\deal_banner.dart|301|47|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\deal_banner.dart|323|39|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\floating_cart_bar.dart|48|41|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\floating_cart_bar.dart|61|49|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\floating_cart_bar.dart|62|52|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\floating_cart_bar.dart|68|47|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|LINT|UNNECESSARY_BRACE_IN_STRING_INTERPS|C:\\aalbot\\dailyclub-main\\lib\\widgets\\floating_cart_bar.dart|85|26|8|Unnecessary braces in a string interpolation.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\floating_cart_bar.dart|113|45|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\floating_cart_bar.dart|114|48|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|LINT|UNNECESSARY_UNDERSCORES|C:\\aalbot\\dailyclub-main\\lib\\widgets\\global_search_overlay.dart|443|37|2|Unnecessary use of multiple underscores.
+INFO|LINT|UNNECESSARY_UNDERSCORES|C:\\aalbot\\dailyclub-main\\lib\\widgets\\header_section.dart|164|30|2|Unnecessary use of multiple underscores.
+INFO|LINT|UNNECESSARY_UNDERSCORES|C:\\aalbot\\dailyclub-main\\lib\\widgets\\hero_banner.dart|110|36|2|Unnecessary use of multiple underscores.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\hero_banner.dart|158|32|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\hero_banner.dart|202|43|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\hero_banner.dart|243|43|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\items\\add_button.dart|141|49|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\items\\add_button.dart|142|52|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\items\\add_button.dart|166|53|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\items\\add_button.dart|167|56|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\items\\add_button.dart|200|53|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\items\\add_button.dart|201|56|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\items\\category_chips.dart|50|83|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\items\\category_chips.dart|51|86|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\items\\item_card.dart|61|41|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\items\\item_card.dart|62|44|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|LINT|USE_BUILD_CONTEXT_SYNCHRONOUSLY|C:\\aalbot\\dailyclub-main\\lib\\widgets\\profile_drawer.dart|612|45|7|Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check.
+INFO|LINT|UNNECESSARY_UNDERSCORES|C:\\aalbot\\dailyclub-main\\lib\\widgets\\suggestion_box.dart|147|33|2|Unnecessary use of multiple underscores.
+INFO|LINT|UNNECESSARY_UNDERSCORES|C:\\aalbot\\dailyclub-main\\lib\\widgets\\trending_section.dart|81|39|2|Unnecessary use of multiple underscores.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\trending_section.dart|164|39|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\trending_section.dart|165|42|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\trending_section.dart|264|49|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|HINT|DEPRECATED_MEMBER_USE|C:\\aalbot\\dailyclub-main\\lib\\widgets\\trending_section.dart|265|52|11|'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+INFO|LINT|AVOID_PRINT|C:\\aalbot\\dailyclub-main\\replace_fonts.dart|32|7|5|Don't invoke 'print' in production code.
+INFO|LINT|AVOID_PRINT|C:\\aalbot\\dailyclub-main\\replace_fonts2.dart|32|7|5|Don't invoke 'print' in production code.
+INFO|LINT|PREFER_INTERPOLATION_TO_COMPOSE_STRINGS|C:\\aalbot\\dailyclub-main\\rm_lines.dart|8|26|23|Use interpolation to compose strings and values.
+INFO|LINT|AVOID_PRINT|C:\\aalbot\\dailyclub-main\\rm_lines.dart|9|3|5|Don't invoke 'print' in production code.
+

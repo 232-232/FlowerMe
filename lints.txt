@@ -1,0 +1,10 @@
+﻿Analyzing items_page.dart...                                    
+
+warning - Unused import: '../providers/favorites_provider.dart' - lib\pages\items_page.dart:19:8 - unused_import
+warning - Unused import: 'product_details_page.dart' - lib\pages\items_page.dart:28:8 - unused_import
+warning - Unused import: '../models/stock_variant_model.dart' - lib\pages\items_page.dart:29:8 - unused_import
+warning - Unused import: '../providers/stock_provider.dart' - lib\pages\items_page.dart:30:8 - unused_import
+  error - The named parameter 'activeCount' is required, but there's no corresponding argument - lib\pages\items_page.dart:329:24 - missing_required_argument
+   info - Unnecessary use of multiple underscores - lib\pages\items_page.dart:1391:35 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\pages\items_page.dart:1458:30 - unnecessary_underscores
+
